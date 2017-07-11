@@ -1,28 +1,39 @@
-import BintrayPlugin.autoImport._
+import xerial.sbt.Sonatype
 
 organization := "me.lessis"
 
 name := "retry"
 
-version := "0.3.0"
+version := "0.2.1"
 
 description := "a library of simple primitives for asynchronously retrying Scala Futures"
 
-crossScalaVersions := Seq("2.10.5", "2.11.6", "2.12.1")
+crossScalaVersions := Seq("2.11.11", "2.12.2")
 scalaVersion in ThisBuild := crossScalaVersions.value.last
-
-lsSettings
 
 val commonSettings = lsSettings ++ Seq(
   LsKeys.tags in LsKeys.lsync := Seq("future", "retry"),
-  bintrayPackageLabels := (LsKeys.tags in LsKeys.lsync).value,
-  externalResolvers in LsKeys.lsync := (resolvers in bintray).value,
   scalacOptions += "-feature",
   resolvers += sbt.Resolver.bintrayRepo("softprops","maven")
 )
 
 lazy val retry = (crossProject in file ("."))
   .settings(commonSettings: _*)
+  .settings(
+    publishTo := {
+      val nexus = "https://oss.sonatype.org/"
+      if (isSnapshot.value)
+        Some("snapshots" at nexus + "content/repositories/snapshots")
+      else
+        Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    },
+    publishMavenStyle := true,
+    publishArtifact in Test := false,
+    pomIncludeRepository := { _ =>
+      false
+    },
+    sonatypeProfileName := "de.kaufhof"
+  )
   .jvmSettings(
     libraryDependencies ++=
       Seq("org.scalatest" %% "scalatest" % "3.0.1" % "test",
@@ -30,7 +41,7 @@ lazy val retry = (crossProject in file ("."))
   )
   .jsSettings(
     libraryDependencies ++=
-      Seq("org.scalatest" %%% "scalatest" % "3.0.1" % "test",
+      Seq("org.scalatest" %%% "scalatest" % "3.0.2" % "test",
         "me.lessis" %%% "odelay-core" % "0.2.0")
   )
 
